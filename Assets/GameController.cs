@@ -3,49 +3,75 @@ using System.Collections;
 
 public class GameController : MonoBehaviour {
 
-	// This is a public reference to the Cube GameObject
-	public GameObject Cube;
+	//tuning variables
+	public float spawnTime = 3.0f;
+	public int bronzePoints = 1, silverPoints = 10, goldPoints = 100;
 
-	//this is a value to represent whether a cube has been spawned
-	bool cubeSpawned = false;
+	public GameObject bronzeCubePrefab;
+	public GameObject silverCubePrefab;
+	public GameObject goldCubePrefab;
 
+	private int bronzeCount = 0, silverCount = 0, goldCount = 0;
+	
+	private int score = 0;
+	private float timeToAct;
 
 	// Use this for initialization
 	void Start () {
+		timeToAct = spawnTime;
+	}
 	
-	}
-
-	// Runs every single frame
+	// Update is called once per frame
 	void Update () {
-		// Checks whether it is time to spawn the cube
-		if (TimeToSpawnCube()) {
-			// Spawns a cube if the check returns true
-			SpawnCube ();
+
+		// This check determines when we spawn a new cube
+		if (Time.time >= timeToAct) {
+			timeToAct += spawnTime;
+
+			// Creates a reference to the cube we're about to spawn
+			GameObject cubePrefab = null;
+
+
+			// if we're spawning a gold count
+			if (silverCount == 2 && bronzeCount == 2) {
+				cubePrefab =  (GameObject) Instantiate(goldCubePrefab, 
+				            new Vector3(Random.Range(-9f, 9f), Random.Range(-3f, 5f), 0),
+				            Quaternion.identity);
+				goldCount++;
+			} 
+
+
+			// if we're spawning a silver cube
+			else if (bronzeCount >= 4) {
+				cubePrefab =  (GameObject) Instantiate(silverCubePrefab, 
+                           new Vector3(Random.Range(-9f, 9f), Random.Range(-3f, 5f), 0),
+                           Quaternion.identity);
+				silverCount++;
+			} 
+
+			// if we're spawning a bronze cube
+			else {
+				cubePrefab =  (GameObject) Instantiate(bronzeCubePrefab, 
+                           new Vector3(Random.Range(-9f, 9f), Random.Range(-3f, 5f), 0),
+                           Quaternion.identity);
+				bronzeCount++;
+			}
+
+			// gives the cube's CubeBehavior script a reference to the GameController so it can call the ProcessDestroyedOre method
+			cubePrefab.GetComponent<CubeBehavior>().gameController = this;
 		}
 	}
 
-	// Used to spawn a cube into the game world
-	void SpawnCube () {
-		// Creates a position at the origin of the game world
-		Vector3 cubePosition = new Vector3(0.0f, 0.0f, 0.0f);
-		
-		// Spawns a cube object at the specified position with no rotation
-		Instantiate(Cube, cubePosition, Quaternion.identity);
-		
-		// Sets the bool to true so that only one cube spawns
-		cubeSpawned = true;
-	}
-
-	// Checks whether it is the proper time to spawn the cube
-	bool TimeToSpawnCube () {
-		// Checks whether the game has passed the three second mark and whether a cube has not already been spawned
-		if (Time.time >= 3.0f && !cubeSpawned) {
-			// returns a value of true if the conditions are met
-			return true;
-		} else {
-			// returns a value of false if the conditions are not met
-			return false;
+	public void ProcessDestroyedOre (OreType oreType) {
+		if (oreType == OreType.Bronze) {
+			bronzeCount--;
+			score += bronzePoints;
+		} else if (oreType == OreType.Silver) {
+			silverCount--;
+			score += silverPoints;
+		} else if (oreType == OreType.Gold) {
+			goldCount--;
+			score += goldPoints;
 		}
 	}
-
 }
